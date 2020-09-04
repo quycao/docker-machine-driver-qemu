@@ -18,6 +18,8 @@ import (
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/ssh"
 	"github.com/docker/machine/libmachine/state"
+	"github.com/gorillalabs/go-powershell/backend"
+	"github.com/kdomanski/iso9660/util"
 	"github.com/qeedquan/iso9660"
 )
 
@@ -202,6 +204,20 @@ func (d *Driver) Remove() error {
 	return nil
 }
 
+func extractISO(isoFile string, destFolder string) error {
+	f, err := os.Open(isoFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err = util.ExtractImageToDirectory(f, destFolder); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getFileOutofFS(iso *iso9660.FileSystem, file string, output string) error {
 	isoFile, err := iso.Open(file)
 	if err != nil {
@@ -232,24 +248,33 @@ func getFileOutofFS(iso *iso9660.FileSystem, file string, output string) error {
 func extractKernel(d *Driver) error {
 	//Windows
 	//Remove Kernel and initrd. //Failing is ok!
-	os.Remove(d.ResolveStorePath("vmlinuz64"))
-	os.Remove(d.ResolveStorePath("initrd.img"))
+	// os.Remove(d.ResolveStorePath("vmlinuz64"))
+	// os.Remove(d.ResolveStorePath("initrd.img"))
+	os.Remove(d.ResolveStorePath("boot2docker\\boot\\vmlinuz"))
+	os.Remove(d.ResolveStorePath("boot2docker\\boot\\initrd.img"))
 
-	isofs, err := iso9660.Open(d.ResolveStorePath("boot2docker.iso"))
-	if err != nil {
-		return err
-	}
-	getFileOutofFS(isofs, "BOOT/VMLINUZ64.;1", d.ResolveStorePath("vmlinuz64"))
-	if err != nil {
-		return err
-	}
-	getFileOutofFS(isofs, "BOOT/INITRD.IMG;1", d.ResolveStorePath("initrd.img"))
+	// isofs, err := iso9660.Open(d.ResolveStorePath("boot2docker.iso"))
+	// if err != nil {
+	// 	return err
+	// }
+	// getFileOutofFS(isofs, "BOOT/VMLINUZ64.;1", d.ResolveStorePath("vmlinuz64"))
+	// if err != nil {
+	// 	return err
+	// }
+	// getFileOutofFS(isofs, "BOOT/INITRD.IMG;1", d.ResolveStorePath("initrd.img"))
+	// if err != nil {
+	// 	return err
+	// }
+
+	os.RemoveAll(d.ResolveStorePath("boot2docker"))
+	os.Mkdir(d.ResolveStorePath("boot2docker"), os.ModePerm)
+	err := extractISO(d.ResolveStorePath("boot2docker.iso"), d.ResolveStorePath("boot2docker"))
+
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 //Start the machine
@@ -276,48 +301,84 @@ func (d *Driver) Start() error {
 		return err
 	}
 
-	var netString string
-	netString = fmt.Sprintf("user,id=mynet0,net=192.168.76.0/24,dhcpstart=192.168.76.9,hostfwd=tcp:127.0.0.1:%d-:22,hostfwd=tcp:127.0.0.1:%d-:2376",
+	netString := fmt.Sprintf("user,id=mynet0,net=192.168.76.0/24,dhcpstart=192.168.76.9,hostfwd=tcp:127.0.0.1:%d-:22,hostfwd=tcp:127.0.0.1:%d-:2376",
 		d.SSHPort,
 		d.EnginePort)
 	for _, port := range d.OpenPorts {
 		netString = fmt.Sprintf("%s,hostfwd=tcp:127.0.0.1:%d-:%d", netString, port, port)
 	}
 
-	var monString string
-	monString = fmt.Sprintf("telnet:127.0.0.1:%d,server,nowait", d.MonitorPort)
+	monString := fmt.Sprintf("telnet:127.0.0.1:%d,server,nowait", d.MonitorPort)
 
-	var diskString string
-	diskString = fmt.Sprintf("file=%s,if=virtio", d.Disk)
+	diskString := fmt.Sprintf("file=%s,if=virtio", d.Disk)
 
 	qemuCmd, err := getQemuCommand(d)
 	if err != nil {
 		return nil
 	}
 
-	cmd := exec.Command(qemuCmd,
+	// cmd := exec.Command(qemuCmd,
+	// 	"-netdev", netString,
+	// 	"-device", "virtio-net,netdev=mynet0",
+	// 	"-boot", "d",
+	// 	"-kernel", d.ResolveStorePath("vmlinuz64"),
+	// 	"-initrd", d.ResolveStorePath("initrd.img"),
+	// 	"-append", `loglevel=3 user=docker console=ttyS0 noembed nomodeset norestore base`,
+	// 	"-m", strconv.Itoa(d.Mem),
+	// 	"-smp", strconv.Itoa(d.Cpus),
+	// 	"-drive", diskString,
+	// 	"-monitor", monString, getQemuAccel(d), "-nographic",
+	// 	"-D", d.ResolveStorePath("qemu.log"),
+	// 	"-serial", fmt.Sprintf("file:%s", d.ResolveStorePath("kern.log")))
+
+	cmd := exec.Command("(Start-Process",
+		qemuCmd,
+		"-WindowStyle Hidden -ArgumentList '",
 		"-netdev", netString,
 		"-device", "virtio-net,netdev=mynet0",
 		"-boot", "d",
-		"-kernel", d.ResolveStorePath("vmlinuz64"),
-		"-initrd", d.ResolveStorePath("initrd.img"),
-		"-append", `loglevel=3 user=docker console=ttyS0 noembed nomodeset norestore base`,
+		"-kernel", d.ResolveStorePath("boot2docker\\boot\\vmlinuz"),
+		"-initrd", d.ResolveStorePath("boot2docker\\boot\\initrd.img"),
+		"-append", `"loglevel=3 user=docker console=ttyS0 noembed nomodeset norestore base"`,
 		"-m", strconv.Itoa(d.Mem),
 		"-smp", strconv.Itoa(d.Cpus),
 		"-drive", diskString,
 		"-monitor", monString, getQemuAccel(d), "-nographic",
 		"-D", d.ResolveStorePath("qemu.log"),
-		"-serial", fmt.Sprintf("file:%s", d.ResolveStorePath("kern.log")))
+		"-serial", fmt.Sprintf("file:%s", d.ResolveStorePath("kern.log")),
+		"' -passthru).ID")
+
+	cmdString := (*cmd).String()
+	log.Infof(cmdString)
 
 	//Set CMD process flags
 	setProcAttr(cmd)
+
 	log.Infof("Starting VM...")
-	cmd.Start()
+	// cmd.Start()
+	// output, err := cmd.CombinedOutput()
+
+	// Running QEMU in PowerShell
+	back := &backend.Local{}
+	shell, err := ps.new(back)
+	if err != nil {
+		return err
+	}
+	defer shell.Exit()
+
+	stdout, stderr, err := shell.Execute(cmdString)
+	if err != nil {
+		log.Infof("%s:%s", err.Error(), string(stderr))
+		return err
+	}
+
+	log.Infof("Started VM with process id: %s", string(stdout))
 
 	d.IPAddress = "127.0.0.1"
 	d.SSHUser = "docker"
 
 	//Give Qemu a few changes to get started!
+	log.Infof("Checking ssh port: %d", d.SSHPort)
 	for i := 0; i < 50; i++ {
 		time.Sleep(200 * time.Millisecond)
 		sshconn, err := net.Dial("tcp", "127.0.0.1:"+strconv.Itoa(d.SSHPort))

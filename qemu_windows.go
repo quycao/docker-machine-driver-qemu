@@ -77,12 +77,14 @@ func getQemuImgCommand(d *Driver) (string, error) {
 
 func getQemuCommand(d *Driver) (string, error) {
 	//TODO checks for Qemu Exe existing!
-	return d.QemuLocation + "\\qemu-system-x86_64.exe", nil
+	// return d.QemuLocation + "\\qemu-system-x86_64.exe", nil
+	return "\"" + d.QemuLocation + "\\qemu-system-x86_64.exe\"", nil
 }
 
 func getQemuAccel(d *Driver) string {
 	//TODO Dev Check
-	return "-enable-hax"
+	// return "-enable-hax"
+	return "-accel hax"
 }
 
 func setProcAttr(cmd *exec.Cmd) {
