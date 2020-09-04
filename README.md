@@ -29,7 +29,7 @@ The usual Docker Machine commands apply:
 docker-machine create --driver qemu qemumachine
 docker-machine env qemumachine
 ```
-On Windows `QEMU_LOCATION` must be set to the location where the
+On Windows `QEMU_LOCATION` must be set to the location where the QEMU installed file located
 
 ## Limitations
 * **Ports**: QEMU will not generally respect forwarding the network traffic to the docker-machine.
