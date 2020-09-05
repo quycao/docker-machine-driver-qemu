@@ -5,6 +5,11 @@ The Docker Machine plugin for QEMU enables the use of the QEMU hypervisor with D
 #### Linux
 * QEMU (qemu-system-x86_64 & qemu-img) in path -2.5.0+ Tested but other expected to work
 * KVM available
+* To install Docker Toolbox without Virtualbox, use command below
+```bash
+# Docker and DockerMachine are required. 
+$ DockerToolbox-<version>.exe /COMPONENTS="Docker,DockerMachine"
+```
 
 #### Windows
 * QEMU 2.9.0+
