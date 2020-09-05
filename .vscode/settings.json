@@ -1,0 +1,4 @@
+{
+    "go.useLanguageServer": true,
+    "github.gitAuthentication": false
+}

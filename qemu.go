@@ -18,9 +18,10 @@ import (
 	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/ssh"
 	"github.com/docker/machine/libmachine/state"
-	"github.com/gorillalabs/go-powershell/backend"
 	"github.com/kdomanski/iso9660/util"
 	"github.com/qeedquan/iso9660"
+	ps "github.com/quycao/go-powershell"
+	"github.com/quycao/go-powershell/backend"
 )
 
 //Driver driver struct
@@ -360,7 +361,7 @@ func (d *Driver) Start() error {
 
 	// Running QEMU in PowerShell
 	back := &backend.Local{}
-	shell, err := ps.new(back)
+	shell, err := ps.New(back)
 	if err != nil {
 		return err
 	}

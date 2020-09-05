@@ -1,8 +1,9 @@
 package main
 
 import (
+	qemu "quycao/docker-machine-driver-qemu"
+
 	"github.com/docker/machine/libmachine/drivers/plugin"
-	"github.com/intel-iot-devkit/docker-machine-driver-qemu"
 )
 
 func main() {
