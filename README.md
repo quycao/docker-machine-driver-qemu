@@ -29,7 +29,7 @@ The usual Docker Machine commands apply:
 docker-machine create --driver qemu qemumachine
 docker-machine env qemumachine
 ```
-On Windows `QEMU_LOCATION` must be set to the location where the QEMU installed file located
+On Windows `QEMU_LOCATION` must be set to the location where the QEMU installed file located.  
 If you get stuck at "Waiting for SSH to be available...", let run commands above in Git Bash.
 
 ## Limitations
