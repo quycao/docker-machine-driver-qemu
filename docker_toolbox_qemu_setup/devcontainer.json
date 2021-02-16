@@ -1,0 +1,30 @@
+{
+    "name": "GoDev",
+    // "dockerFile": "Dockerfile",
+    "image": "golang:alpine-devtools",
+    // "service": "api",
+    // "dockerComposeFile": "docker-compose.yml",
+
+    // Use 'settings' to set *default* container specific settings.json values on container create. 
+    // You can edit these settings after create using File > Preferences > Settings > Remote.
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/sh"
+    },
+    "runArgs": ["--privileged"],
+    "appPort": ["9999:9999"],
+    "workspaceMount": "src=//mnt/workspaces/go/quycao/gopet,dst=/workspaces/gopet,type=bind,consistency=delegated",
+
+
+    // Specifies a command that should be run after the container has been created.
+    // "postCreateCommand": "yarn install",
+
+    // Add the IDs of extensions you want installed when the container is created in the array below.
+    "extensions": [
+        "golang.Go"
+    ],
+    "remoteEnv": {
+        "GOPATH": "/go"
+        // "PATH": "${containerEnv:PATH}:/usr/local/go/bin",
+        // "MY_REMOTE_VARIABLE2": "${localEnv:SOME_LOCAL_VAR}"
+    }
+}
